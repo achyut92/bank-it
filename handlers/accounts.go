@@ -21,6 +21,8 @@ func RegisterAccountRoutes(r *gin.Engine, db *gorm.DB) {
 func createAccountHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var dtoAccount dto.CreateAccount
+
+		//Validate and bind request body
 		if err := c.ShouldBindJSON(&dtoAccount); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 			return
@@ -31,6 +33,7 @@ func createAccountHandler(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid balance format"})
 			return
 		}
+		//Create Account + Handles duplicate account creation
 		if err := db.Create(&modelAccount).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create account"})
 			return

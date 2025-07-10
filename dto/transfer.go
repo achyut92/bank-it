@@ -13,6 +13,7 @@ type Transfer struct {
 	Amount               string `json:"amount" binding:"required,numeric"`
 }
 
+// Convert DTO to DB Model
 func (d *Transfer) ToModel() (*models.Transaction, error) {
 	amountFloat, err := strconv.ParseFloat(d.Amount, 64)
 	if err != nil {

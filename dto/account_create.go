@@ -13,6 +13,7 @@ type CreateAccount struct {
 	Balance   string `json:"initial_balance" binding:"required,numeric"`
 }
 
+// Convert DTO to DB Model
 func (d *CreateAccount) ToModel() (*models.Account, error) {
 	balanceFloat, err := strconv.ParseFloat(d.Balance, 64)
 	if err != nil {

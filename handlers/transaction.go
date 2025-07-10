@@ -22,16 +22,20 @@ func RegisterTransactionRoutes(r *gin.Engine, db *gorm.DB) {
 func createTransactionHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var dtoTxn dto.Transfer
+
+		//Validate and bind request body
 		if err := c.ShouldBindJSON(&dtoTxn); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 			return
 		}
 
+		//Prohibit transfer within same account
 		if dtoTxn.DestinationAccountID == dtoTxn.SourceAccountID {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Source and Destination ID cannot be same"})
 			return
 		}
 
+		//Convert DTO to DB Model
 		txn, convertError := dtoTxn.ToModel()
 		if convertError != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid amount format"})
@@ -44,18 +48,22 @@ func createTransactionHandler(db *gorm.DB) gin.HandlerFunc {
 
 		err := db.Transaction(func(tx *gorm.DB) error {
 			var src models.Account
+
+			//Lock on Source Account row and prevent other db txn from querying/updating it
 			if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&src, "account_id = ?", txn.SourceAccountID).Error; err != nil {
 				responseCode = http.StatusNotFound
 				responseBody = gin.H{"error": "Source account not found"}
 				return err
 			}
 
+			//Handle insufficient fund in Source account
 			if src.Balance < txn.Amount {
 				responseCode = http.StatusBadRequest
 				responseBody = gin.H{"error": "Insufficient funds"}
 				return gorm.ErrInvalidTransaction
 			}
 
+			//Lock on Destination Account
 			var dst models.Account
 			if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&dst, "account_id = ?", txn.DestinationAccountID).Error; err != nil {
 				responseCode = http.StatusNotFound
@@ -74,6 +82,7 @@ func createTransactionHandler(db *gorm.DB) gin.HandlerFunc {
 				return err
 			}
 
+			//Txn log for Debit
 			debitTxn := models.Transaction{
 				SourceAccountID:      txn.SourceAccountID,
 				DestinationAccountID: txn.DestinationAccountID,
@@ -83,6 +92,7 @@ func createTransactionHandler(db *gorm.DB) gin.HandlerFunc {
 				ReferenceId:          referenceId,
 			}
 
+			//Txn log for Credit
 			creditTxn := models.Transaction{
 				SourceAccountID:      txn.SourceAccountID,
 				DestinationAccountID: txn.DestinationAccountID,
@@ -92,6 +102,7 @@ func createTransactionHandler(db *gorm.DB) gin.HandlerFunc {
 				ReferenceId:          referenceId,
 			}
 
+			//Create Txn DB logs
 			if err := tx.Create(&debitTxn).Error; err != nil {
 				return err
 			}
