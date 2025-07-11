@@ -20,7 +20,7 @@ func RegisterAccountRoutes(r *gin.Engine, db *gorm.DB) {
 
 func createAccountHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var dtoAccount dto.CreateAccount
+		var dtoAccount dto.Account
 
 		//Validate and bind request body
 		if err := c.ShouldBindJSON(&dtoAccount); err != nil {
@@ -59,6 +59,11 @@ func getAccountHandler(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, acc)
+		response := dto.Account{
+			AccountID: acc.AccountID,
+			Balance:   strconv.FormatFloat(acc.Balance, 'f', -2, 64),
+		}
+
+		c.JSON(http.StatusOK, response)
 	}
 }
