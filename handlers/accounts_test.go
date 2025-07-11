@@ -20,7 +20,7 @@ func TestCreateAccountHandler(t *testing.T) {
 	RegisterAccountRoutes(router, db)
 
 	t.Run("successfully creates account", func(t *testing.T) {
-		body := `{"account_id": 1234, "balance": "500.00"}`
+		body := `{"account_id": 1234, "initial_balance": "500.00"}`
 		req, _ := http.NewRequest("POST", "/accounts", bytes.NewBufferString(body))
 		req.Header.Set("Content-Type", "application/json")
 		resp := httptest.NewRecorder()
@@ -60,7 +60,7 @@ func TestGetAccountHandler(t *testing.T) {
 		var result map[string]interface{}
 		json.Unmarshal(resp.Body.Bytes(), &result)
 		assert.Equal(t, float64(5678), result["account_id"])
-		assert.Equal(t, 300.00, result["balance"])
+		assert.Equal(t, "300", result["balance"])
 	})
 
 	t.Run("account not found", func(t *testing.T) {
