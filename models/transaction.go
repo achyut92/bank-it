@@ -1,6 +1,9 @@
 package models
 
-import "bank-it/enums"
+import (
+	"bank-it/enums"
+	"time"
+)
 
 type Transaction struct {
 	SourceAccountID      int     `json:"source_account_id"`
@@ -9,4 +12,5 @@ type Transaction struct {
 	Balance              float64
 	TransactionType      enums.TransactionType
 	ReferenceId          string
+	CreatedAt            time.Time
 }

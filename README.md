@@ -102,3 +102,6 @@ go test ./...
 - Erro codes can be used instead of human readable message (helps in internalization)
 - The `amount` in create transaction payload could be float instead of string
 - Senstive env variables (DB_PASSWORD) to be stored in key-valut
+- Organize DB operations into a separate package `repository`
+- Organize business logic in a separate package `services`
+- Use DB change management tool (like liquibase) to mange schema changes
